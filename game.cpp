@@ -216,34 +216,34 @@ void DrawGame0(void)
 	DrawPlayer();
 
 	// 弾の描画処理
-	//DrawBullet();
+	DrawBullet();
 
 	// 壁の描画処理
-	//DrawMeshWall();
+	DrawMeshWall();
 
 	// 海藻の描画処理
-	//DrawSeaweed();
+	DrawSeaweed();
 
 	// パーティクルの描画処理
-	//DrawParticle();
+	DrawParticle();
 
 
 	// 2Dの物を描画する処理
 	// Z比較なし
-	//SetDepthEnable(FALSE);
+	SetDepthEnable(FALSE);
 
 	// ライティングを無効
-	//SetLightEnable(FALSE);
+	SetLightEnable(FALSE);
 
 	// スコアの描画処理
-	//DrawScore();
+	DrawScore();
 
 
 	// ライティングを有効に
-	//SetLightEnable(TRUE);
+	SetLightEnable(TRUE);
 
 	// Z比較あり
-	//SetDepthEnable(TRUE);
+	SetDepthEnable(TRUE);
 }
 
 

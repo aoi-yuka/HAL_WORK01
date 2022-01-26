@@ -33,13 +33,13 @@
 #define PLAYER_GRAVITY		(-3.0f)						// プレイヤーに与える重力
 
 #define PLAYER_JUMP_POWER	(11.0f)						// ジャンプ力
-#define PLAYER_JUMP_AC		(0.9f)						// ジャンプ力の減衰度
-#define PLAYER_STEP_AC		(PLAYER_JUMP_AC * 0.9f)			// 踏みつけたときのジャンプ力の減衰度
+#define PLAYER_JUMP_AC		(0.9f)						// ジャンプ力の減衰度(1.0f未満)
+#define PLAYER_STEP_AC		(PLAYER_JUMP_AC * 0.9f)		// 踏みつけたときのジャンプ力の減衰度
 
 #define INIT_DASH_POWER		(5.0f)						// ダッシュ速度
 #define MAX_DASH_POWER		(10.0f)						// ダッシュの最大速度
-#define PLAYER_DASH_AC		(1.8f)	// ダッシュ加速度（〇.〇倍ずつ加速）
-#define PLAYER_DASH_DC		(0.8f)	// ダッシュ減速度（〇.〇fずつ減速）
+#define PLAYER_DASH_AC		(1.8f)						// ダッシュ加速度（〇.〇倍ずつ加速）
+#define PLAYER_DASH_DC		(0.8f)						// ダッシュ減速度（〇.〇fずつ減速）
 
 //*****************************************************************************
 // プロトタイプ宣言
@@ -190,66 +190,68 @@ void UpdatePlayer(void)
 	// 地面へ接地したときの処理
 	PlayerGround();
 
-
-	// 移動処理
-	if (GetKeyboardPress(DIK_LEFT) || GetKeyboardPress(DIK_A))
-	{	// 左へ移動
-		player.spd = VALUE_MOVE;
-		player.dir = XM_PI / 2;
-	}
-	if (GetKeyboardPress(DIK_RIGHT) || GetKeyboardPress(DIK_D))
-	{	// 右へ移動
-		player.spd = VALUE_MOVE;
-		player.dir = -XM_PI / 2;
-	}
-	if (GetKeyboardPress(DIK_UP) || GetKeyboardPress(DIK_W))
-	{	// 上へ移動
-		player.spd = VALUE_MOVE;
-		player.dir = XM_PI;
-	}
-	if (GetKeyboardPress(DIK_DOWN) || GetKeyboardPress(DIK_S))
-	{	// 下へ移動
-		player.spd = VALUE_MOVE;
-		player.dir = 0.0f;
-	}
-
-	// ゲームパッドでの移動処理
-	if (IsButtonPressed(0, BUTTON_DOWN))
-	{	// 下へ移動
-		player.spd = VALUE_MOVE;
-		player.dir = 0.0f;
-	}
-	else if (IsButtonPressed(0, BUTTON_UP))
-	{	// 上へ移動
-		player.spd = VALUE_MOVE;
-		player.dir = XM_PI;
-	}
-
-	if (IsButtonPressed(0, BUTTON_RIGHT))
-	{	// 右へ移動
-		player.spd = VALUE_MOVE;
-		player.dir = -XM_PI / 2;
-	}
-	else if (IsButtonPressed(0, BUTTON_LEFT))
-	{	// 左へ移動
-		player.spd = VALUE_MOVE;
-		player.dir = XM_PI / 2;
-	}
-
-	// ジャンプ処理
-	// スペースボタン or Aボタン を押したら実行
-	if (GetKeyboardTrigger(DIK_SPACE) || IsButtonPressed(0, BUTTON_A))
+	if (player.use == TRUE)
 	{
-		PlaySound(SOUND_LABEL_SE_jump000);	// ジャンプ音
+		// 移動処理
+		if (GetKeyboardPress(DIK_LEFT) || GetKeyboardPress(DIK_A))
+		{	// 左へ移動
+			player.spd = VALUE_MOVE;
+			player.dir = XM_PI / 2;
+		}
+		if (GetKeyboardPress(DIK_RIGHT) || GetKeyboardPress(DIK_D))
+		{	// 右へ移動
+			player.spd = VALUE_MOVE;
+			player.dir = -XM_PI / 2;
+		}
+		if (GetKeyboardPress(DIK_UP) || GetKeyboardPress(DIK_W))
+		{	// 上へ移動
+			player.spd = VALUE_MOVE;
+			player.dir = XM_PI;
+		}
+		if (GetKeyboardPress(DIK_DOWN) || GetKeyboardPress(DIK_S))
+		{	// 下へ移動
+			player.spd = VALUE_MOVE;
+			player.dir = 0.0f;
+		}
 
-		player.jumpFlag = TRUE;		// ジャンプ中のフラグ
-		player.ground = FALSE;	// 接地していない状態のフラグ
-		//SetBullet(player.pos, player.rot);
-	}
-	// ダッシュ処理
-	if (GetKeyboardTrigger(DIK_LSHIFT))// 左シフト
-	{
-		player.dashFlag = TRUE;			// フラグをTRUEにする:
+		// ゲームパッドでの移動処理
+		if (IsButtonPressed(0, BUTTON_DOWN))
+		{	// 下へ移動
+			player.spd = VALUE_MOVE;
+			player.dir = 0.0f;
+		}
+		else if (IsButtonPressed(0, BUTTON_UP))
+		{	// 上へ移動
+			player.spd = VALUE_MOVE;
+			player.dir = XM_PI;
+		}
+
+		if (IsButtonPressed(0, BUTTON_RIGHT))
+		{	// 右へ移動
+			player.spd = VALUE_MOVE;
+			player.dir = -XM_PI / 2;
+		}
+		else if (IsButtonPressed(0, BUTTON_LEFT))
+		{	// 左へ移動
+			player.spd = VALUE_MOVE;
+			player.dir = XM_PI / 2;
+		}
+
+		// ジャンプ処理
+		// スペースボタン or Aボタン を押したら実行
+		if (GetKeyboardTrigger(DIK_SPACE) || IsButtonPressed(0, BUTTON_A))
+		{
+			PlaySound(SOUND_LABEL_SE_jump000);	// ジャンプ音
+
+			player.jumpFlag = TRUE;		// ジャンプ中のフラグ
+			player.ground = FALSE;	// 接地していない状態のフラグ
+			//SetBullet(player.pos, player.rot);
+		}
+		// ダッシュ処理
+		if (GetKeyboardTrigger(DIK_LSHIFT))// 左シフト
+		{
+			player.dashFlag = TRUE;			// フラグをTRUEにする
+		}
 	}
 
 

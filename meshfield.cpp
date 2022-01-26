@@ -36,7 +36,7 @@ static float		g_fBlockSizeXField, g_fBlockSizeZField;	// ブロックサイズ
 //static int			blinkCount;								// エネミー点滅に使う
 
 static char* g_TextureName[] = {
-	"data/TEXTURE/field001.jpg",
+	"data/TEXTURE/field000.png",
 };
 
 
@@ -132,8 +132,10 @@ HRESULT InitMeshField(XMFLOAT3 pos, XMFLOAT3 rot,
 			g_Vertex[z * (g_nNumBlockXField + 1) + x].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 			// テクスチャ座標の設定
-			float texSizeX = 1.0f / g_nNumBlockXField;
-			float texSizeZ = 1.0f / g_nNumBlockZField;
+			float texSizeX = 1.0f;
+			float texSizeZ = 1.0f;
+			//float texSizeX = 1.0f / g_nNumBlockXField;
+			//float texSizeZ = 1.0f / g_nNumBlockZField;
 			g_Vertex[z * (g_nNumBlockXField + 1) + x].TexCoord.x = texSizeX * x;
 			g_Vertex[z * (g_nNumBlockXField + 1) + x].TexCoord.y = texSizeZ * z;
 		}
