@@ -92,7 +92,8 @@ HRESULT InitTitle(void)
 	alphaCount = 1.0f;		// ƒJƒEƒ“ƒg‚ğ‰Šú‰»
 
 	// BGMÄ¶
-	PlaySound(SOUND_LABEL_BGM_title000);
+	//PlaySound(SOUND_LABEL_BGM_title000);
+	PlaySound(SOUND_LABEL_BGM_MONO_title000);
 
 	g_Load = TRUE;
 	return S_OK;
