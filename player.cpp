@@ -18,7 +18,7 @@
 #include "sound.h"
 
 //*****************************************************************************
-// マクロ定義5
+// マクロ定義
 //*****************************************************************************
 #define	MODEL_PLAYER		"data/MODEL/wood_character.obj"		// 読み込むモデル名
 #define	MODEL_PLAYER_PARTS	"data/MODEL/parts_ring000.obj"		// 読み込むモデル名
@@ -40,6 +40,9 @@
 #define MAX_DASH_POWER		(10.0f)						// ダッシュの最大速度
 #define PLAYER_DASH_AC		(1.8f)						// ダッシュ加速度（〇.〇倍ずつ加速）
 #define PLAYER_DASH_DC		(0.8f)						// ダッシュ減速度（〇.〇fずつ減速）
+
+#define PLAYER_SHADOW_HEIGHT		(100.0f)			// ダッシュ減速度（〇.〇fずつ減速）
+
 
 //*****************************************************************************
 // プロトタイプ宣言
@@ -189,6 +192,11 @@ void UpdatePlayer(void)
 
 	// 地面へ接地したときの処理
 	PlayerGround();
+
+	// 影の処理
+	float t = player.pos.y / PLAYER_SHADOW_HEIGHT;
+	float newSize = PLAYER_SHADOW_SIZE * (1.0f - t);
+	SetShadowScale(player.shadowIdx, XMFLOAT3(newSize, 1.0f, newSize));
 
 	if (player.use == TRUE)
 	{
@@ -650,11 +658,5 @@ void PlayerDash(void)
 		player.dashSpeedCalc = INIT_DASH_POWER;	// ダッシュ計算の初期値を戻す
 
 	}
-
-
-
-
-	// ※Gitつくろう
-
 
 }

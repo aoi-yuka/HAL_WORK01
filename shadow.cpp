@@ -302,3 +302,13 @@ void SetPositionShadow(int nIdxShadow, XMFLOAT3 pos)
 	}
 }
 
+//=============================================================================
+// ˆÊ’u‚ÌÝ’è
+//=============================================================================
+void SetShadowScale(int nIdxShadow, XMFLOAT3 scl)
+{
+	if (nIdxShadow >= 0 && nIdxShadow < MAX_SHADOW)
+	{
+		g_aShadow[nIdxShadow].scl = scl;
+	}
+}

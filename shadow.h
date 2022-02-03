@@ -19,3 +19,4 @@ int CreateShadow(XMFLOAT3 pos, float fSizeX, float fSizeZ);
 void ReleaseShadow(int nIdxShadow);
 void SetPositionShadow(int nIdxShadow, XMFLOAT3 pos);
 void SetColorShadow(int nIdxShadow, XMFLOAT4 col);
+void SetShadowScale(int nIdxShadow, XMFLOAT3 scl);
