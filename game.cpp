@@ -207,7 +207,7 @@ void DrawGame0(void)
 	DrawMeshField();
 
 	// 影の描画処理
-	//DrawShadow();
+	DrawShadow();
 
 	// エネミーの描画処理
 	DrawEnemy();
@@ -259,8 +259,13 @@ void DrawGame(void)
 #endif
 
 	// プレイヤー視点
-	pos = GetPlayer()->pos;
+	PLAYER *player = GetPlayer();
+	CAMERA *camera = GetCamera();
+
+	pos = player->pos;
 	pos.y = 0.0f;			// カメラ酔いを防ぐためにクリアしている
+	//camera->pos.y = player->pos.y + POS_Y_CAM;
+
 	SetCameraAT(pos);
 	SetCamera();
 
