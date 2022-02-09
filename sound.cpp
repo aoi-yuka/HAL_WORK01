@@ -43,7 +43,7 @@ SOUNDPARAM g_aParam[SOUND_LABEL_MAX] =
 	{ (char*)"data/SE/nextscene000.wav", 0 },		// シーン遷移SE
 	{ (char*)"data/SE/nextscene001.wav", 0 },		// シーン遷移SE
 	{ (char*)"data/SE/playerDestroy000.wav", 0 },	// プレイヤーキルSE
-	{ (char*)"data/BGM/bgm_mono_title000.wav", 1 },	// テスト用タイトルBGM（モノラル）
+	{ (char*)"data/BGM/bgm_mono_title000.wav", -1 },	// テスト用タイトルBGM（モノラル）
 
 };
 
