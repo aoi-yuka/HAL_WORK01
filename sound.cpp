@@ -5,6 +5,7 @@
 //
 //=============================================================================
 #include "sound.h"
+#include <math.h>
 
 //*****************************************************************************
 // パラメータ構造体定義
@@ -53,9 +54,11 @@ float frame;
 
 static int		InChannels = 1;
 static int		OutChannels = 2;
-static float	Volumes[] = { 1.0f, 0.0f };
 
-
+float Pan = 0.0f; // 鳴らしたい角度
+double Rad = ((Pan + 90.0f) / 2.0f) * (M_PI / 180.0f); // ラジアンに変換
+static float	Volumes[] = { cosf(Rad), sinf(Rad) };
+//static float	Volumes[] = { cosf((float)Rad), sinf((float)Rad) };
 //=============================================================================
 // 初期化処理
 //=============================================================================
@@ -205,6 +208,8 @@ BOOL InitSound(HWND hWnd)
 	g_apSourceVoice[SOUND_LABEL_BGM_game000]->SetVolume(gameVolume);
 	g_apSourceVoice[SOUND_LABEL_BGM_result000]->SetVolume(newVolume);
 	g_apSourceVoice[SOUND_LABEL_BGM_MONO_title000]->SetOutputMatrix(NULL, InChannels, OutChannels, Volumes);
+
+
 	return TRUE;
 }
 
