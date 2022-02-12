@@ -58,7 +58,7 @@ static int		OutChannels = 2;
 float Pan = 0.0f; // –Â‚ç‚µ‚½‚¢Šp“x
 double Rad = ((Pan + 90.0f) / 2.0f) * (M_PI / 180.0f); // ƒ‰ƒWƒAƒ“‚É•ÏŠ·
 static float	Volumes[] = { cosf(Rad), sinf(Rad) };
-static float	Volumes[] = { cosf((float)Rad), sinf((float)Rad) };
+//static float	Volumes[] = { cosf((float)Rad), sinf((float)Rad) };
 //=============================================================================
 // ‰Šú‰»ˆ—
 //=============================================================================
