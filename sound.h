@@ -30,6 +30,8 @@ enum
 	SOUND_LABEL_SE_nextscene001,	// シーン遷移SE
 	SOUND_LABEL_SE_playerDestroy000,// プレイヤーキルSE
 
+	SOUND_LABEL_BGM_MONO_title000,	// テスト用タイトルBGM（モノラル）
+
 	SOUND_LABEL_MAX,
 };
 
