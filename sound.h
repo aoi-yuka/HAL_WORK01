@@ -8,6 +8,8 @@
 
 #include <windows.h>
 #include "xaudio2.h"						// サウンド処理で必要
+#include <AK/SoundEngine/Common/AkSoundEngine.h>
+#include <AK/IBytes.h>
 
 //*****************************************************************************
 // マクロ定義
@@ -36,6 +38,58 @@ enum
 };
 
 //*****************************************************************************
+// クラス定義
+//*****************************************************************************
+class SOUND_PARAM
+{
+public:
+	char	*fileName;		// ファイル名
+	int		loopCnt;		// ループカウント
+	float	defaultVolume;	// デフォルトボリューム
+	int		type;			// 音の種類
+};
+
+
+class SOUND_VOICE
+{
+public:
+
+};
+
+class SOUND_FADE
+{
+public:
+
+};
+
+class SOUND_PANNING
+{
+public:
+	BOOL	panning;
+
+	float	cameraDiff;
+
+};
+
+class SOUND_LPF
+{
+public:
+
+};
+
+class SOUND_HPF
+{
+public:
+
+};
+
+class SOUND_LPF_DYNAMIC
+{
+public:
+
+};
+
+//*****************************************************************************
 // プロトタイプ宣言
 //*****************************************************************************
 BOOL InitSound(HWND hWnd);
@@ -43,6 +97,6 @@ void UninitSound(void);
 void PlaySound(int label);
 void StopSound(int label);
 void StopSound(void);
-void FadeSound(float targetVolume, float targetTime);
-void UpdateFadeSound(float deltaTime, float targetVolume, float targetTime);
+
+void CreatePanning(SOUND_PANNING *pan, int label);
 

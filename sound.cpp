@@ -6,16 +6,27 @@
 //=============================================================================
 #include "sound.h"
 #include "main.h"
-//#include <math.h>
+
+#include <math.h>
 
 //*****************************************************************************
-// パラメータ構造体定義
+// マクロ定義
 //*****************************************************************************
-typedef struct
+enum
 {
-	char *pFilename;	// ファイル名
-	int nCntLoop;		// ループカウント
-} SOUNDPARAM;
+	LOOP = -1,
+	NONLOOP = 0,
+};
+
+enum
+{
+	TYPE_BGM,
+	TYPE_SE,
+};
+
+//*****************************************************************************
+// クラス定義
+//*****************************************************************************
 
 //*****************************************************************************
 // プロトタイプ宣言
@@ -26,51 +37,45 @@ HRESULT ReadChunkData(HANDLE hFile, void *pBuffer, DWORD dwBuffersize, DWORD dwB
 //*****************************************************************************
 // グローバル変数
 //*****************************************************************************
-IXAudio2 *g_pXAudio2 = NULL;								// XAudio2オブジェクトへのインターフェイス
-IXAudio2MasteringVoice *g_pMasteringVoice = NULL;			// マスターボイス
-IXAudio2SourceVoice *g_apSourceVoice[SOUND_LABEL_MAX] = {};	// ソースボイス
-BYTE *g_apDataAudio[SOUND_LABEL_MAX] = {};					// オーディオデータ
-DWORD g_aSizeAudio[SOUND_LABEL_MAX] = {};					// オーディオデータサイズ
+IXAudio2 *xAudio2 = NULL;									// XAudio2オブジェクトへのインターフェイス
+IXAudio2MasteringVoice *masteringVoice = NULL;			// マスターボイス
+//IXAudio2SourceVoice *sourceVoice[SOUND_LABEL_MAX] = {};	// ソースボイス
+BYTE *audioData[SOUND_LABEL_MAX] = {};					// オーディオデータ
+DWORD audioSize[SOUND_LABEL_MAX] = {};					// オーディオデータサイズ
 
 // 各音素材のパラメータ 
-SOUNDPARAM g_aParam[SOUND_LABEL_MAX] =
+SOUND_PARAM soundParam[SOUND_LABEL_MAX] =
 {// サウンドファイル名, ループ（-1：する / 0：しない）
-	{ (char*)"data/BGM/bgm_title000.wav", -1 },		// タイトルBGM
-	{ (char*)"data/BGM/bgm_tutorial000.wav", -1 },	// チュートリアルBGM
-	{ (char*)"data/BGM/bgm_game000.wav", -1 },		// ゲーム内BGM
-	{ (char*)"data/BGM/bgm_result000.wav", -1 },	// リザルトBGM
-	{ (char*)"data/SE/ground000.wav", 0 },			// 着地SE
-	{ (char*)"data/SE/jump000.wav", 0 },			// ジャンプSE
-	{ (char*)"data/SE/jumpkill000.wav", 0 },		// 踏みつけSE
-	{ (char*)"data/SE/nextscene000.wav", 0 },		// シーン遷移SE
-	{ (char*)"data/SE/nextscene001.wav", 0 },		// シーン遷移SE
-	{ (char*)"data/SE/playerDestroy000.wav", 0 },	// プレイヤーキルSE
-	{ (char*)"data/BGM/bgm_mono_title000.wav", -1 },	// テスト用タイトルBGM（モノラル）
+	{ (char*)"data/BGM/bgm_title000.wav", LOOP },		// タイトルBGM
+	{ (char*)"data/BGM/bgm_tutorial000.wav", LOOP },	// チュートリアルBGM
+	{ (char*)"data/BGM/bgm_game000.wav", LOOP },		// ゲーム内BGM
+	{ (char*)"data/BGM/bgm_result000.wav", LOOP },	// リザルトBGM
+	{ (char*)"data/SE/ground000.wav", NONLOOP },			// 着地SE
+	{ (char*)"data/SE/jump000.wav", NONLOOP },			// ジャンプSE
+	{ (char*)"data/SE/jumpkill000.wav", NONLOOP },		// 踏みつけSE
+	{ (char*)"data/SE/nextscene000.wav", NONLOOP },		// シーン遷移SE
+	{ (char*)"data/SE/nextscene001.wav", NONLOOP },		// シーン遷移SE
+	{ (char*)"data/SE/playerDestroy000.wav", NONLOOP },	// プレイヤーキルSE
+	{ (char*)"data/BGM/bgm_mono_title000.wav", LOOP },	// テスト用タイトルBGM（モノラル）
 
 };
 
-//音量の設定
-float newVolume, gameVolume, lastVolume;
-float frame;
+HWND globalHWnd;
 
-static int		InChannels = 1;
-static int		OutChannels = 2;
 
-float Pan = 0.0f; // 鳴らしたい角度
-float Rad = ((Pan + 90.0f) / 2.0f) * (XM_PI / 180.0f); // ラジアンに変換
-static float	Volumes[] = { cosf(Rad), sinf(Rad) };
 //=============================================================================
 // 初期化処理
 //=============================================================================
 BOOL InitSound(HWND hWnd)
 {
 	HRESULT hr;
+	globalHWnd = hWnd;
 
 	// COMライブラリの初期化
 	CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
 	// XAudio2オブジェクトの作成
-	hr = XAudio2Create(&g_pXAudio2, 0);
+	hr = XAudio2Create(&xAudio2, 0);
 	if(FAILED(hr))
 	{
 		MessageBox(hWnd, "XAudio2オブジェクトの作成に失敗！", "警告！", MB_ICONWARNING);
@@ -82,16 +87,16 @@ BOOL InitSound(HWND hWnd)
 	}
 	
 	// マスターボイスの生成
-	hr = g_pXAudio2->CreateMasteringVoice(&g_pMasteringVoice);
+	hr = xAudio2->CreateMasteringVoice(&masteringVoice);
 	if(FAILED(hr))
 	{
 		MessageBox(hWnd, "マスターボイスの生成に失敗！", "警告！", MB_ICONWARNING);
 
-		if(g_pXAudio2)
+		if(xAudio2)
 		{
 			// XAudio2オブジェクトの開放
-			g_pXAudio2->Release();
-			g_pXAudio2 = NULL;
+			xAudio2->Release();
+			xAudio2 = NULL;
 		}
 
 		// COMライブラリの終了処理
@@ -99,13 +104,6 @@ BOOL InitSound(HWND hWnd)
 
 		return FALSE;
 	}
-
-	// 音量の設定
-	newVolume = 0.1f;
-	gameVolume = 0.4f;
-	lastVolume = 0.0f;
-	frame = 0.0f;
-
 
 	// サウンドデータの初期化
 	for(int nCntSound = 0; nCntSound < SOUND_LABEL_MAX; nCntSound++)
@@ -122,7 +120,7 @@ BOOL InitSound(HWND hWnd)
 		memset(&buffer, 0, sizeof(XAUDIO2_BUFFER));
 
 		// サウンドデータファイルの生成
-		hFile = CreateFile(g_aParam[nCntSound].pFilename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+		hFile = CreateFile(soundParam[nCntSound].fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 		if(hFile == INVALID_HANDLE_VALUE)
 		{
 			MessageBox(hWnd, "サウンドデータファイルの生成に失敗！(1)", "警告！", MB_ICONWARNING);
@@ -168,14 +166,14 @@ BOOL InitSound(HWND hWnd)
 		}
 
 		// オーディオデータ読み込み
-		hr = CheckChunk(hFile, 'atad', &g_aSizeAudio[nCntSound], &dwChunkPosition);
+		hr = CheckChunk(hFile, 'atad', &audioSize[nCntSound], &dwChunkPosition);
 		if(FAILED(hr))
 		{
 			MessageBox(hWnd, "オーディオデータ読み込みに失敗！(1)", "警告！", MB_ICONWARNING);
 			return FALSE;
 		}
-		g_apDataAudio[nCntSound] = (BYTE*)malloc(g_aSizeAudio[nCntSound]);
-		hr = ReadChunkData(hFile, g_apDataAudio[nCntSound], g_aSizeAudio[nCntSound], dwChunkPosition);
+		audioData[nCntSound] = (BYTE*)malloc(audioSize[nCntSound]);
+		hr = ReadChunkData(hFile, audioData[nCntSound], audioSize[nCntSound], dwChunkPosition);
 		if(FAILED(hr))
 		{
 			MessageBox(hWnd, "オーディオデータ読み込みに失敗！(2)", "警告！", MB_ICONWARNING);
@@ -183,33 +181,24 @@ BOOL InitSound(HWND hWnd)
 		}
 	
 		// ソースボイスの生成
-		hr = g_pXAudio2->CreateSourceVoice(&g_apSourceVoice[nCntSound], &(wfx.Format));
-		if(FAILED(hr))
-		{
-			MessageBox(hWnd, "ソースボイスの生成に失敗！", "警告！", MB_ICONWARNING);
-			return FALSE;
-		}
+		//hr = xAudio2->CreateSourceVoice(&sourceVoice[nCntSound], &(wfx.Format));
+		//if(FAILED(hr))
+		//{
+		//	MessageBox(hWnd, "ソースボイスの生成に失敗！", "警告！", MB_ICONWARNING);
+		//	return FALSE;
+		//}
 
 		// バッファの値設定
-		memset(&buffer, 0, sizeof(XAUDIO2_BUFFER));
-		buffer.AudioBytes = g_aSizeAudio[nCntSound];
-		buffer.pAudioData = g_apDataAudio[nCntSound];
-		buffer.Flags      = XAUDIO2_END_OF_STREAM;
-		buffer.LoopCount  = g_aParam[nCntSound].nCntLoop;
+		//memset(&buffer, 0, sizeof(XAUDIO2_BUFFER));
+		//buffer.AudioBytes = audioSize[nCntSound];
+		//buffer.pAudioData = audioData[nCntSound];
+		//buffer.Flags      = XAUDIO2_END_OF_STREAM;
+		//buffer.LoopCount  = soundParam[nCntSound].loopCnt;
 
 		// オーディオバッファの登録
-		g_apSourceVoice[nCntSound]->SubmitSourceBuffer(&buffer);
-
-
+		//sourceVoice[nCntSound]->SubmitSourceBuffer(&buffer);
 	}
-
-	// 音量の設定
-	g_apSourceVoice[SOUND_LABEL_BGM_tutorial000]->SetVolume(newVolume);
-	g_apSourceVoice[SOUND_LABEL_BGM_game000]->SetVolume(gameVolume);
-	g_apSourceVoice[SOUND_LABEL_BGM_result000]->SetVolume(newVolume);
-	g_apSourceVoice[SOUND_LABEL_BGM_MONO_title000]->SetOutputMatrix(NULL, InChannels, OutChannels, Volumes);
-
-
+	  
 	return TRUE;
 }
 
@@ -221,30 +210,30 @@ void UninitSound(void)
 	// 一時停止
 	for(int nCntSound = 0; nCntSound < SOUND_LABEL_MAX; nCntSound++)
 	{
-		if(g_apSourceVoice[nCntSound])
+		if(sourceVoice[nCntSound])
 		{
 			// 一時停止
-			g_apSourceVoice[nCntSound]->Stop(0);
+			sourceVoice[nCntSound]->Stop(0);
 	
 			// ソースボイスの破棄
-			g_apSourceVoice[nCntSound]->DestroyVoice();
-			g_apSourceVoice[nCntSound] = NULL;
+			sourceVoice[nCntSound]->DestroyVoice();
+			sourceVoice[nCntSound] = NULL;
 	
 			// オーディオデータの開放
-			free(g_apDataAudio[nCntSound]);
-			g_apDataAudio[nCntSound] = NULL;
+			free(audioData[nCntSound]);
+			audioData[nCntSound] = NULL;
 		}
 	}
 	
 	// マスターボイスの破棄
-	g_pMasteringVoice->DestroyVoice();
-	g_pMasteringVoice = NULL;
+	masteringVoice->DestroyVoice();
+	masteringVoice = NULL;
 	
-	if(g_pXAudio2)
+	if(xAudio2)
 	{
 		// XAudio2オブジェクトの開放
-		g_pXAudio2->Release();
-		g_pXAudio2 = NULL;
+		xAudio2->Release();
+		xAudio2 = NULL;
 	}
 	
 	// COMライブラリの終了処理
@@ -261,35 +250,27 @@ void PlaySound(int label)
 
 	// バッファの値設定
 	memset(&buffer, 0, sizeof(XAUDIO2_BUFFER));
-	buffer.AudioBytes = g_aSizeAudio[label];
-	buffer.pAudioData = g_apDataAudio[label];
+	buffer.AudioBytes = audioSize[label];
+	buffer.pAudioData = audioData[label];
 	buffer.Flags      = XAUDIO2_END_OF_STREAM;
-	buffer.LoopCount  = g_aParam[label].nCntLoop;
+	buffer.LoopCount  = soundParam[label].loopCnt;
 
 	// 状態取得
-	g_apSourceVoice[label]->GetState(&xa2state);
+	sourceVoice[label]->GetState(&xa2state);
 	if(xa2state.BuffersQueued != 0)
 	{// 再生中
 		// 一時停止
-		g_apSourceVoice[label]->Stop(0);
+		sourceVoice[label]->Stop(0);
 
 		// オーディオバッファの削除
-		g_apSourceVoice[label]->FlushSourceBuffers();
+		sourceVoice[label]->FlushSourceBuffers();
 	}
 
 	// オーディオバッファの登録
-	g_apSourceVoice[label]->SubmitSourceBuffer(&buffer);
+	sourceVoice[label]->SubmitSourceBuffer(&buffer);
 
 	// 再生
-	g_apSourceVoice[label]->Start(0);
-
-	// 音量の設定
-	if (newVolume != lastVolume)
-	{
-		g_apSourceVoice[label]->SetVolume(newVolume);
-		lastVolume = newVolume;
-	}
-
+	sourceVoice[label]->Start(0);
 }
 
 //=============================================================================
@@ -300,14 +281,14 @@ void StopSound(int label)
 	XAUDIO2_VOICE_STATE xa2state;
 
 	// 状態取得
-	g_apSourceVoice[label]->GetState(&xa2state);
+	sourceVoice[label]->GetState(&xa2state);
 	if(xa2state.BuffersQueued != 0)
 	{// 再生中
 		// 一時停止
-		g_apSourceVoice[label]->Stop(0);
+		sourceVoice[label]->Stop(0);
 
 		// オーディオバッファの削除
-		g_apSourceVoice[label]->FlushSourceBuffers();
+		sourceVoice[label]->FlushSourceBuffers();
 	}
 }
 
@@ -319,10 +300,10 @@ void StopSound(void)
 	// 一時停止
 	for(int nCntSound = 0; nCntSound < SOUND_LABEL_MAX; nCntSound++)
 	{
-		if(g_apSourceVoice[nCntSound])
+		if(sourceVoice[nCntSound])
 		{
 			// 一時停止
-			g_apSourceVoice[nCntSound]->Stop(0);
+			sourceVoice[nCntSound]->Stop(0);
 		}
 	}
 }
@@ -416,21 +397,136 @@ HRESULT ReadChunkData(HANDLE hFile, void *pBuffer, DWORD dwBuffersize, DWORD dwB
 }
 
 //=============================================================================
-// フェードする為の値をセットする関数（到達したい音の大きさ, 到達する時間）
+// SOUND_PANの生成
 //=============================================================================
-void FadeSound(float targetVolume, float targetTime)
+void CreatePanning(SOUND_PANNING *pan, int label)
 {
+	HRESULT hr;
+	WAVEFORMATEXTENSIBLE wfx;
+	XAUDIO2_BUFFER buffer;
 
-	UpdateFadeSound(frame, targetVolume, targetTime);
+	// ソースボイスの生成
+	hr = xAudio2->CreateSourceVoice(&sourceVoice[label], &(wfx.Format));
+	if (FAILED(hr))
+	{
+		MessageBox(globalHWnd, "ソースボイスの生成に失敗！", "警告！", MB_ICONWARNING);
+		return;
+	}
 
-	frame += 1.0f;
+	// バッファの値設定
+	memset(&buffer, 0, sizeof(XAUDIO2_BUFFER));
+	buffer.AudioBytes = audioSize[label];
+	buffer.pAudioData = audioData[label];
+	buffer.Flags = XAUDIO2_END_OF_STREAM;
+	buffer.LoopCount = soundParam[label].loopCnt;
+
+	// オーディオバッファの登録
+	sourceVoice[label]->SubmitSourceBuffer(&buffer);
+
+
+	pan->panning = TRUE;
 }
 
 //=============================================================================
-// フェードサウンド処理
+// パンニングの更新処理(ラベル指定)
 //=============================================================================
-void UpdateFadeSound(float deltaTime, float targetVolume, float targetTime)
-{
-	float t_Volume = targetVolume / targetTime;
-	g_apSourceVoice[SOUND_LABEL_BGM_title000]->SetVolume(newVolume);
-}
+//void UpdatePanning()
+//{
+//	for (int i = 0; i < SOUND_LABEL_MAX; i++)
+//	{
+//		XAUDIO2_VOICE_STATE xa2state;
+//		sourceVoice[i]->GetState(&xa2state);
+//		if (xa2state.BuffersQueued > 0)	// 再生中のみ
+//		{
+//			if (filter[i].panning == TRUE)	// パンニング中のみ
+//			{
+//				if (filter[i].cameraDiff > MOVE_STEP)
+//				{
+//
+//					CAMERA *camera = GetCamera();
+//					PLAYER *player = GetPlayer();
+//
+//					float volumeL = 0.0f;
+//					float volumeR = 0.0f;
+//					int inChannels = 0;
+//					int outChannels = 0;
+//					float volumes[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+//
+//					// 距離の計算
+//					XMVECTOR calc = XMVector3Length(XMLoadFloat3(&player->pos) - XMLoadFloat3(&camera->pos));
+//					float length = 0.0f;
+//					XMStoreFloat(&length, calc);
+//
+//
+//					if (length <= AUDIBLE_RANGE)
+//					{// 範囲内
+//
+//						PLAYER *player = GetPlayer();
+//
+//						XMFLOAT3 vecA = { 0.0f, 0.0f, 0.0f };
+//						XMFLOAT3 vecB = { 0.0f, 0.0f, 0.0f };
+//						XAUDIO2_VOICE_DETAILS details;
+//						sourceVoice[i]->GetVoiceDetails(&details);	// ソースボイスの情報を取得
+//						inChannels = details.InputChannels;
+//						masteringVoice->GetVoiceDetails(&details);		// マスターボイスの情報を取得
+//						outChannels = details.InputChannels;
+//
+//						// 2つのベクトルの算出
+//						XMVECTOR calcVecA = XMLoadFloat3(&player->pos) - XMLoadFloat3(&camera->pos);
+//						XMVECTOR calcVecB = XMLoadFloat3(&soundParams[i].pos) - XMLoadFloat3(&camera->pos);
+//						XMStoreFloat3(&vecA, calcVecA);
+//						XMStoreFloat3(&vecB, calcVecB);
+//
+//						// 角の計算
+//						float ang = atan2f(-vecA.x + vecB.x, -vecA.z + vecB.z) - camera->rot.y;
+//
+//						// 270度以上を変換
+//						if (ang >= XM_PI * 1.5f)
+//						{
+//							ang -= 2.0f * XM_PI;
+//						}
+//						// 90より大きい且つ270未満を変換
+//						if ((ang > XM_PI * 0.5f) && (ang < XM_PI * 1.5f))
+//						{
+//							ang = XM_PI - ang;
+//						}
+//
+//						ang = (ang + XM_PI * 0.5f) *0.5f;
+//
+//						// 変換
+//						float t = length / AUDIBLE_RANGE;
+//						volumeL = cosf(ang) * (1.0f - t);
+//						volumeR = sinf(ang) * (1.0f - t);
+//
+//						// いい感じに調整(人間の耳では0.5fにしても半分に聞こえない)
+//						volumeL = volumeL * volumeL;
+//						volumeR = volumeR * volumeR;
+//
+//#ifdef _DEBUG
+//						PrintDebugProc("angle: %f\n", ang);
+//						PrintDebugProc("volumeL: %f\n", volumeL);
+//						PrintDebugProc("volumeR: %f\n", volumeR);
+//#endif
+//
+//						// 左右のボリュームへ代入
+//						volumes[0] = { volumeL };
+//						volumes[3] = { volumeR };
+//
+//						sourceVoice[i]->SetOutputMatrix(NULL, inChannels, outChannels, volumes);
+//					}
+//					else
+//					{
+//						volumeL = volumeR = 0.0f;
+//						sourceVoice[i]->SetOutputMatrix(NULL, inChannels, outChannels, volumes);
+//					}
+//				}
+//			}
+//		}
+//		else
+//		{
+//			filter[i].panning = FALSE;
+//		}
+//	}
+//
+//
+//}
