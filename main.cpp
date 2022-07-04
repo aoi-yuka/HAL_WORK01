@@ -234,7 +234,6 @@ HRESULT Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 	// サウンドの初期化
 	InitSound(hWnd);
 
-
 	// ライトを有効化
 	SetLightEnable(TRUE);
 
