@@ -60,7 +60,10 @@ SOUND_PARAM soundParam[SOUND_LABEL_MAX] =
 
 };
 
-HWND globalHWnd;
+HWND gHWnd;
+
+SOUND_VOICE voices;
+
 
 
 //=============================================================================
@@ -69,7 +72,7 @@ HWND globalHWnd;
 BOOL InitSound(HWND hWnd)
 {
 	HRESULT hr;
-	globalHWnd = hWnd;
+	gHWnd = hWnd;
 
 	// COMライブラリの初期化
 	CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -208,22 +211,22 @@ BOOL InitSound(HWND hWnd)
 void UninitSound(void)
 {
 	// 一時停止
-	for(int nCntSound = 0; nCntSound < SOUND_LABEL_MAX; nCntSound++)
-	{
-		if(sourceVoice[nCntSound])
-		{
-			// 一時停止
-			sourceVoice[nCntSound]->Stop(0);
-	
-			// ソースボイスの破棄
-			sourceVoice[nCntSound]->DestroyVoice();
-			sourceVoice[nCntSound] = NULL;
-	
-			// オーディオデータの開放
-			free(audioData[nCntSound]);
-			audioData[nCntSound] = NULL;
-		}
-	}
+	//for(int nCntSound = 0; nCntSound < SOUND_LABEL_MAX; nCntSound++)
+	//{
+	//	if(sourceVoice[nCntSound])
+	//	{
+	//		// 一時停止
+	//		sourceVoice[nCntSound]->Stop(0);
+	//
+	//		// ソースボイスの破棄
+	//		sourceVoice[nCntSound]->DestroyVoice();
+	//		sourceVoice[nCntSound] = NULL;
+	//
+	//		// オーディオデータの開放
+	//		free(audioData[nCntSound]);
+	//		audioData[nCntSound] = NULL;
+	//	}
+	//}
 	
 	// マスターボイスの破棄
 	masteringVoice->DestroyVoice();
@@ -243,70 +246,70 @@ void UninitSound(void)
 //=============================================================================
 // セグメント再生(再生中なら停止)
 //=============================================================================
-void PlaySound(int label)
-{
-	XAUDIO2_VOICE_STATE xa2state;
-	XAUDIO2_BUFFER buffer;
-
-	// バッファの値設定
-	memset(&buffer, 0, sizeof(XAUDIO2_BUFFER));
-	buffer.AudioBytes = audioSize[label];
-	buffer.pAudioData = audioData[label];
-	buffer.Flags      = XAUDIO2_END_OF_STREAM;
-	buffer.LoopCount  = soundParam[label].loopCnt;
-
-	// 状態取得
-	sourceVoice[label]->GetState(&xa2state);
-	if(xa2state.BuffersQueued != 0)
-	{// 再生中
-		// 一時停止
-		sourceVoice[label]->Stop(0);
-
-		// オーディオバッファの削除
-		sourceVoice[label]->FlushSourceBuffers();
-	}
-
-	// オーディオバッファの登録
-	sourceVoice[label]->SubmitSourceBuffer(&buffer);
-
-	// 再生
-	sourceVoice[label]->Start(0);
-}
-
-//=============================================================================
-// セグメント停止(ラベル指定)
-//=============================================================================
-void StopSound(int label)
-{
-	XAUDIO2_VOICE_STATE xa2state;
-
-	// 状態取得
-	sourceVoice[label]->GetState(&xa2state);
-	if(xa2state.BuffersQueued != 0)
-	{// 再生中
-		// 一時停止
-		sourceVoice[label]->Stop(0);
-
-		// オーディオバッファの削除
-		sourceVoice[label]->FlushSourceBuffers();
-	}
-}
+//void PlaySound(int label)
+//{
+//	XAUDIO2_VOICE_STATE xa2state;
+//	XAUDIO2_BUFFER buffer;
+//
+//	// バッファの値設定
+//	memset(&buffer, 0, sizeof(XAUDIO2_BUFFER));
+//	buffer.AudioBytes = audioSize[label];
+//	buffer.pAudioData = audioData[label];
+//	buffer.Flags      = XAUDIO2_END_OF_STREAM;
+//	buffer.LoopCount  = soundParam[label].loopCnt;
+//
+//	// 状態取得
+//	sourceVoice[label]->GetState(&xa2state);
+//	if(xa2state.BuffersQueued != 0)
+//	{// 再生中
+//		// 一時停止
+//		sourceVoice[label]->Stop(0);
+//
+//		// オーディオバッファの削除
+//		sourceVoice[label]->FlushSourceBuffers();
+//	}
+//
+//	// オーディオバッファの登録
+//	sourceVoice[label]->SubmitSourceBuffer(&buffer);
+//
+//	// 再生
+//	sourceVoice[label]->Start(0);
+//}
+//
+////=============================================================================
+//// セグメント停止(ラベル指定)
+////=============================================================================
+//void StopSound(int label)
+//{
+//	XAUDIO2_VOICE_STATE xa2state;
+//
+//	// 状態取得
+//	sourceVoice[label]->GetState(&xa2state);
+//	if(xa2state.BuffersQueued != 0)
+//	{// 再生中
+//		// 一時停止
+//		sourceVoice[label]->Stop(0);
+//
+//		// オーディオバッファの削除
+//		sourceVoice[label]->FlushSourceBuffers();
+//	}
+//}
 
 //=============================================================================
 // セグメント停止(全て)
 //=============================================================================
-void StopSound(void)
-{
-	// 一時停止
-	for(int nCntSound = 0; nCntSound < SOUND_LABEL_MAX; nCntSound++)
-	{
-		if(sourceVoice[nCntSound])
-		{
-			// 一時停止
-			sourceVoice[nCntSound]->Stop(0);
-		}
-	}
-}
+//void StopSound(void)
+//{
+//	// 一時停止
+//	for(int nCntSound = 0; nCntSound < SOUND_LABEL_MAX; nCntSound++)
+//	{
+//		if(sourceVoice[nCntSound])
+//		{
+//			// 一時停止
+//			sourceVoice[nCntSound]->Stop(0);
+//		}
+//	}
+//}
 
 //=============================================================================
 // チャンクのチェック
@@ -397,34 +400,36 @@ HRESULT ReadChunkData(HANDLE hFile, void *pBuffer, DWORD dwBuffersize, DWORD dwB
 }
 
 //=============================================================================
-// SOUND_PANの生成
+// SOUND_VOICEの生成(同じ音を2個、別々に鳴らせる状態)
 //=============================================================================
-void CreatePanning(SOUND_PANNING *pan, int label)
+void CreateSourceVoices(SOUND_VOICE *voice, int label)
 {
+	voice->pSourceVoice[SOURCEVOICE_CREATE_1] = {};
 	HRESULT hr;
 	WAVEFORMATEXTENSIBLE wfx;
 	XAUDIO2_BUFFER buffer;
 
 	// ソースボイスの生成
-	hr = xAudio2->CreateSourceVoice(&sourceVoice[label], &(wfx.Format));
+	hr = xAudio2->CreateSourceVoice(&voice->pSourceVoice[SOURCEVOICE_CREATE_1], &(wfx.Format));
 	if (FAILED(hr))
 	{
-		MessageBox(globalHWnd, "ソースボイスの生成に失敗！", "警告！", MB_ICONWARNING);
+		MessageBox(gHWnd, "ソースボイスの生成に失敗！", "警告！", MB_ICONWARNING);
 		return;
 	}
 
-	// バッファの値設定
-	memset(&buffer, 0, sizeof(XAUDIO2_BUFFER));
-	buffer.AudioBytes = audioSize[label];
-	buffer.pAudioData = audioData[label];
-	buffer.Flags = XAUDIO2_END_OF_STREAM;
-	buffer.LoopCount = soundParam[label].loopCnt;
+	{// バッファの値設定
+		memset(&buffer, 0, sizeof(XAUDIO2_BUFFER));
+		buffer.AudioBytes = audioSize[label];
+		buffer.pAudioData = audioData[label];
+		buffer.Flags = XAUDIO2_END_OF_STREAM;
+		buffer.LoopCount = soundParam[label].loopCnt;
+	}
 
 	// オーディオバッファの登録
-	sourceVoice[label]->SubmitSourceBuffer(&buffer);
-
-
-	pan->panning = TRUE;
+	for (int i = 0; i < SOURCEVOICE_CREATE_2; i++)
+	{
+		voice->pSourceVoice[i]->SubmitSourceBuffer(&buffer);
+	}
 }
 
 //=============================================================================

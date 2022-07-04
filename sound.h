@@ -7,9 +7,10 @@
 #pragma once
 
 #include <windows.h>
+#include "main.h"
 #include "xaudio2.h"						// サウンド処理で必要
-#include <AK/SoundEngine/Common/AkSoundEngine.h>
-#include <AK/IBytes.h>
+//#include <AK/SoundEngine/Common/AkSoundEngine.h>
+//#include <AK/IBytes.h>
 
 //*****************************************************************************
 // マクロ定義
@@ -37,6 +38,22 @@ enum
 	SOUND_LABEL_MAX,
 };
 
+enum
+{
+	SOURCEVOICE_CREATE_1,
+	SOURCEVOICE_CREATE_2,
+
+	SOURCEVOICE_MAX
+};
+
+enum
+{
+	VOICE_NUM_1 = 1,
+	VOICE_NUM_2,
+
+	VOICE_NUM_MAX
+};
+
 //*****************************************************************************
 // クラス定義
 //*****************************************************************************
@@ -53,22 +70,31 @@ public:
 class SOUND_VOICE
 {
 public:
-
+	IXAudio2SourceVoice	**pSourceVoice;
 };
 
 class SOUND_FADE
 {
 public:
+	int		state;
 
+	float	sVolume;
+	float	eVolume;
+
+	float	preVolume;
+
+	float	sTime;
+	float	eTime;
 };
 
 class SOUND_PANNING
 {
 public:
-	BOOL	panning;
+	BOOL		state;
 
 	float	cameraDiff;
 
+	XMFLOAT3 pos;
 };
 
 class SOUND_LPF
@@ -98,5 +124,7 @@ void PlaySound(int label);
 void StopSound(int label);
 void StopSound(void);
 
-void CreatePanning(SOUND_PANNING *pan, int label);
+//	 CreateSourceVoice(サウンドのラベル);
+
+void CreateSourceVoices(SOUND_VOICE *voice, int label);
 
